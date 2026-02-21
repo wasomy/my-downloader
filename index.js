@@ -1,5 +1,5 @@
 const express = require("express");
-const ytdlp = require("yt-dlp-exec");
+const ytDlp = require("yt-dlp-exec");
 const path = require("path");
 const fs = require("fs");
 
@@ -14,39 +14,33 @@ app.get("/download", async (req, res) => {
   }
 
   try {
-    // جلب معلومات الفيديو أولاً
-    const info = await ytdlp(videoUrl, {
-      dumpSingleJson: true,
-      noPlaylist: true,
-    });
+    const outputPath = path.join(__dirname, "video.mp4");
 
-    const safeTitle = info.title.replace(/[<>:"/\\|?*]+/g, "");
-    const outputPath = path.join(__dirname, `${safeTitle}.mp4`);
-
-    // تحميل بأفضل جودة MP4 ودمج الصوت
-    await ytdlp(videoUrl, {
-      output: outputPath,
-      format: "bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4]",
-      noPlaylist: true,
-      mergeOutputFormat: "mp4",
-    });
-
-    if (!fs.existsSync(outputPath)) {
-      return res.status(500).send("Download failed");
+    // نحذف الملف القديم إذا موجود
+    if (fs.existsSync(outputPath)) {
+      fs.unlinkSync(outputPath);
     }
 
-    res.download(outputPath, () => {
-      if (fs.existsSync(outputPath)) {
-        fs.unlinkSync(outputPath);
-      }
+    await ytDlp(videoUrl, {
+      output: outputPath,
+      format: "mp4", // صيغة مباشرة بدون دمج
+      noPlaylist: true,
+    });
+
+    res.download(outputPath, "video.mp4", () => {
+      fs.unlinkSync(outputPath); // نحذف بعد الإرسال
     });
 
   } catch (error) {
-    console.error(error);
-    res.status(500).send("Error downloading video");
+    console.error("DOWNLOAD ERROR:", error);
+    res.status(500).send("Video download failed. Check server logs.");
   }
 });
 
+app.get("/", (req, res) => {
+  res.send("Server is running");
+});
+
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
