@@ -6,10 +6,8 @@ const fs = require("fs");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// الصفحة الرئيسية
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public.html"));
-});
+// خلي Express يخدم الملفات الثابتة
+app.use(express.static(__dirname));
 
 // تحميل الفيديو
 app.get("/download", async (req, res) => {
